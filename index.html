@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malik Fast Food - Chatbot</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E63946; --dark-red: #c1121f; --yellow: #FFD60A;
+    --dark: #1a1a2e; --darker: #0d0d1a; --card: #16213e;
+    --text: #f0f0f0; --muted: #a0a0b0; --green: #2ecc71;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--darker); font-family:'Tajawal',sans-serif;
+    display:flex; justify-content:center; align-items:center; min-height:100vh;
+    background-image:radial-gradient(ellipse at 20% 20%, rgba(230,57,70,0.15) 0%, transparent 50%),
+                     radial-gradient(ellipse at 80% 80%, rgba(255,214,10,0.08) 0%, transparent 50%);
+  }
+  .chat-container {
+    width:420px; height:700px; background:var(--dark); border-radius:24px;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    animation:slideUp 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+  .chat-header {
+    background:linear-gradient(135deg,var(--red),var(--dark-red));
+    padding:18px 20px; display:flex; align-items:center; gap:12px;
+    position:relative; overflow:hidden;
+  }
+  .chat-header::before {
+    content:''; position:absolute; top:-20px; right:-20px;
+    width:100px; height:100px; background:rgba(255,214,10,0.15); border-radius:50%;
+  }
+  .header-avatar {
+    width:50px; height:50px; background:var(--yellow); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow:0 4px 15px rgba(0,0,0,0.3); flex-shrink:0;
+  }
+  .header-info h1 { font-family:'Playfair Display',serif; font-size:17px; color:#fff; font-weight:900; }
+  .header-info p { font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }
+  .online-dot {
+    width:8px; height:8px; background:var(--green); border-radius:50%;
+    display:inline-block; margin-right:5px; animation:pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .messages {
+    flex:1; overflow-y:auto; padding:16px 14px;
+    display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth;
+  }
+  .messages::-webkit-scrollbar { width:4px; }
+  .messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+  .message { max-width:85%; animation:msgIn 0.3s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .message.bot { align-self:flex-start; }
+  .message.user { align-self:flex-end; }
+  .message-bubble {
+    padding:11px 15px; border-radius:18px;
+    font-size:14px; line-height:1.65; color:var(--text); white-space:pre-wrap;
+  }
+  .bot .message-bubble { background:var(--card); border-bottom-left-radius:4px; border:1px solid rgba(255,255,255,0.06); }
+  .user .message-bubble { background:linear-gradient(135deg,var(--red),var(--dark-red)); border-bottom-right-radius:4px; color:#fff; }
+  .message-time { font-size:10px; color:var(--muted); margin-top:3px; padding:0 4px; }
+  .user .message-time { text-align:right; }
+  .typing-indicator {
+    display:flex; align-items:center; gap:5px; padding:12px 16px;
+    background:var(--card); border-radius:18px; border-bottom-left-radius:4px;
+    width:fit-content; border:1px solid rgba(255,255,255,0.06);
+  }
+  .typing-dot { width:7px; height:7px; background:var(--muted); border-radius:50%; animation:typingAnim 1.2s infinite; }
+  .typing-dot:nth-child(2){animation-delay:0.2s} .typing-dot:nth-child(3){animation-delay:0.4s}
+  @keyframes typingAnim { 0%,100%{transform:translateY(0);opacity:0.4} 50%{transform:translateY(-5px);opacity:1} }
+  .quick-btns { display:flex; flex-wrap:wrap; gap:7px; padding:0 14px 10px; }
+  .quick-btn {
+    background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35);
+    color:var(--red); padding:6px 13px; border-radius:20px;
+    font-size:12px; font-family:'Tajawal',sans-serif; cursor:pointer; transition:all 0.2s;
+  }
+  .quick-btn:hover { background:var(--red); color:#fff; transform:translateY(-1px); }
+  .input-area {
+    padding:14px; background:var(--dark); border-top:1px solid rgba(255,255,255,0.06);
+    display:flex; gap:10px; align-items:center;
+  }
+  .input-area input {
+    flex:1; background:var(--card); border:1px solid rgba(255,255,255,0.08);
+    border-radius:24px; padding:11px 16px; color:var(--text);
+    font-family:'Tajawal',sans-serif; font-size:14px; outline:none; transition:border-color 0.2s;
+  }
+  .input-area input::placeholder { color:var(--muted); }
+  .input-area input:focus { border-color:rgba(230,57,70,0.5); }
+  .send-btn {
+    width:44px; height:44px; background:linear-gradient(135deg,var(--red),var(--dark-red));
+    border:none; border-radius:50%; color:#fff; font-size:17px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform 0.2s; flex-shrink:0; box-shadow:0 4px 15px rgba(230,57,70,0.4);
+  }
+  .send-btn:hover{transform:scale(1.05)} .send-btn:active{transform:scale(0.95)}
+  .order-card {
+    background:linear-gradient(135deg,rgba(255,214,10,0.08),rgba(230,57,70,0.08));
+    border:1px solid rgba(255,214,10,0.25); border-radius:12px; padding:13px; font-size:13px;
+  }
+  .order-title { color:var(--yellow); font-weight:700; margin-bottom:8px; font-size:14px; }
+  .order-info { color:var(--text); margin-bottom:4px; }
+  .order-item { display:flex; justify-content:space-between; padding:3px 0; color:var(--text); border-bottom:1px solid rgba(255,255,255,0.05); }
+  .order-total { color:var(--yellow); font-weight:700; margin-top:8px; font-size:15px; }
+  .confirm-btn {
+    width:100%; margin-top:10px; background:linear-gradient(135deg,var(--green),#27ae60);
+    border:none; border-radius:10px; color:#fff; padding:10px;
+    font-family:'Tajawal',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s;
+  }
+  .confirm-btn:hover{opacity:0.9}
+  @media(max-width:440px){ .chat-container{width:100vw;height:100vh;border-radius:0;} }
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="header-avatar">🍔</div>
+    <div class="header-info">
+      <h1>Malik Fast Food</h1>
+      <p><span class="online-dot"></span>24/7 Online | Order Karein</p>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="quick-btns">
+    <button class="quick-btn" onclick="sendQuick('Menu dikhao')">📋 Menu</button>
+    <button class="quick-btn" onclick="sendQuick('Burgers kya hain?')">🍔 Burgers</button>
+    <button class="quick-btn" onclick="sendQuick('Pizza kya hain?')">🍕 Pizza</button>
+    <button class="quick-btn" onclick="sendQuick('Order karna chahta hoon')">🛒 Order</button>
+  </div>
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Yahan likhen..." onkeypress="handleKey(event)" />
+    <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+<script>
+const OWNER_EMAIL = 'tm4270911@gmail.com';
+let history = [];
+
+function getTime() { return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
+
+function addMessage(text, sender) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className = `message ${sender}`;
+  const bubble = document.createElement('div'); bubble.className = 'message-bubble'; bubble.textContent = text;
+  const time = document.createElement('div'); time.className = 'message-time'; time.textContent = getTime();
+  div.appendChild(bubble); div.appendChild(time); msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addHTMLMessage(html, sender) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className = `message ${sender}`;
+  const bubble = document.createElement('div'); bubble.className = 'message-bubble'; bubble.innerHTML = html;
+  const time = document.createElement('div'); time.className = 'message-time'; time.textContent = getTime();
+  div.appendChild(bubble); div.appendChild(time); msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className = 'message bot'; div.id = 'typing';
+  div.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() { const t = document.getElementById('typing'); if(t) t.remove(); }
+
+function showOrderCard(order) {
+  let itemsHTML = order.items.map(i => `<div class="order-item"><span>${i.name} x${i.qty}</span><span>Rs. ${i.price*i.qty}</span></div>`).join('');
+  const html = `<div class="order-card">
+    <div class="order-title">🧾 Order Summary</div>
+    <div class="order-info">👤 <b>${order.customer}</b></div>
+    <div class="order-info">📞 ${order.phone}</div>
+    <div class="order-info">📍 ${order.address}</div>
+    <div style="margin-top:8px">${itemsHTML}</div>
+    <div class="order-total">💰 Total: Rs. ${order.total}</div>
+    <button class="confirm-btn" onclick='confirmOrder(${JSON.stringify(order)})'>✅ Order Confirm Karein</button>
+  </div>`;
+  addHTMLMessage(html, 'bot');
+}
+
+function confirmOrder(order) {
+  const subject = `New Order - Malik Fast Food`;
+  const body = `NEW ORDER\n\nCustomer: ${order.customer}\nPhone: ${order.phone}\nAddress: ${order.address}\n\nItems:\n${order.items.map(i=>`- ${i.name} x${i.qty} = Rs. ${i.price*i.qty}`).join('\n')}\n\nTOTAL: Rs. ${order.total}\nTime: ${new Date().toLocaleString()}`;
+  window.location.href = `mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  addMessage(`✅ Order confirm ho gaya!\n📧 Details ${OWNER_EMAIL} pe send ho rahi hain.\n🚗 Delivery 30-45 min mein hogi!\n\nShukriya! 🍔❤️`, 'bot');
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage(text, 'user');
+  input.value = '';
+  showTyping();
+  history.push({ role: 'user', content: text });
+  try {
+    const res = await fetch('/.netlify/functions/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Maafi chahta hoon, dobara try karein.';
+    history.push({ role: 'assistant', content: reply });
+    removeTyping();
+    if (reply.includes('ORDER_JSON:')) {
+      const match = reply.match(/ORDER_JSON:(\{[\s\S]*\})/);
+      if (match) {
+        try {
+          const order = JSON.parse(match[1]);
+          const before = reply.replace(/ORDER_JSON:[\s\S]*/, '').trim();
+          if (before) addMessage(before, 'bot');
+          showOrderCard(order); return;
+        } catch(e) {}
+      }
+    }
+    addMessage(reply, 'bot');
+  } catch(e) {
+    removeTyping();
+    addMessage('⚠️ Kuch masla hua. Dobara try karein.', 'bot');
+  }
+}
+
+function sendQuick(text) { document.getElementById('userInput').value = text; sendMessage(); }
+function handleKey(e) { if(e.key==='Enter') sendMessage(); }
+
+window.onload = async () => {
+  showTyping();
+  await new Promise(r => setTimeout(r, 900));
+  removeTyping();
+  addMessage('Assalamualaikum! 👋\n\nMalik Fast Food mein khush aamdeed! 🍔🍕\nMain aapka digital assistant hoon.\n\nMenu dekhein, kisi bhi cheez ke baare mein poochein, ya order dein!\n\nKya khaayein ge aaj? 😊', 'bot');
+};
+</script>
+</body>
+</html>
